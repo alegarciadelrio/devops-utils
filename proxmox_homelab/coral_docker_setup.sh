@@ -53,9 +53,10 @@ ls /dev/apex_0
 
 
 # Mount CCTV clips directory to Docker CT
+# mp0: local-lvm:vm-101-disk-1,mp=/cctv_clips,backup=1,size=300G
 mkdir /data
 mkdir /data/cctv_clips
-pct set 101 -mp0 /data/cctv_clips,mp=/cctv_clips
+pct set 100 -mp0 storage-lvm:vm-100-disk-0,mp=/cctv_clips,backup=1,size=200G
 ls /data/cctv_clips/
 vim /etc/pve/lxc/100.conf
 printf "\nlxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file 0, 0\nlxc.mount.entry: /dev/apex_0 dev/apex_0 none bind,optional,create=file 0,0\n" >> /etc/pve/lxc/100.conf
