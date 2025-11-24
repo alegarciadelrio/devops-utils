@@ -1,4 +1,3 @@
-version: "3.7"
 services:
   # mqtt5 eclipse-mosquitto
   mqtt5:
