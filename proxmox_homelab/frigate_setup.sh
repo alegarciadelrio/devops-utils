@@ -1,7 +1,6 @@
 # Create necessary directories
-mkdir -p /opt/frigate/config /opt/mqtt/config
-
-
+cp -r frigate /opt
+cp -r mqtt /opt
 
 # Run mqtt and frigate
 cd /opt/mqtt/
