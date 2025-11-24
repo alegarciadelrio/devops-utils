@@ -1,0 +1,97 @@
+mqtt:
+  host: 10.0.101.6
+  port: 1883
+  user: admin
+  password: admin
+
+detectors:
+  coral1:
+    type: edgetpu
+    device: pci:0
+
+objects:
+  track:
+    - person
+    - dog
+    - car
+
+review:
+  alerts:
+    labels:
+      - person
+  detections:
+    labels:
+      - dog
+      - car
+
+ffmpeg:
+  hwaccel_args: preset-vaapi
+
+go2rtc:
+  streams:
+    cam1:
+      - rtsp://admin:password@10.0.101.11/:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
+    cam1_sub:
+      - rtsp://admin:password@10.0.101.11/:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
+    cam2:
+      - rtsp://admin:password@10.0.101.12/:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
+    cam2_sub:
+      - rtsp://admin:password@10.0.101.12/:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
+    cam3:
+      - rtsp://admin:password@10.0.101.13/:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
+    cam3_sub:
+      - rtsp://admin:password@10.0.101.13/:554/cam/realmonitor?channel=1&subtype=1&unicast=true&proto=Onvif
+
+cameras:
+  cam1:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/cam1?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/cam1_sub?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+    detect:
+      enabled: true
+    record:
+      enabled: true
+  cam2:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/cam2?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/cam2_sub?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+      hwaccel_args: preset-vaapi
+    detect:
+      enabled: true
+    record:
+      enabled: true
+  cam3:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/cam3?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/cam3_sub?video=copy
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+    detect:
+      enabled: true
+    record:
+      enabled: true
+version: 0.16-0
+detect:
+  enabled: true
