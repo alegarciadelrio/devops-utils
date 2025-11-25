@@ -9,9 +9,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/Proxmo
 bash -c "$(wget -qLO - https://cdn.jsdelivr.net/gh/tteck/Proxmox@main/misc/microcode.sh)"
 
 # Install Home Assistant VM
-wget -o - https://github.com/tteck/Proxmox/raw/main/vm/haos-vm.sh
-sed -i 's/pve-manager\/8\.\[1-3\]/pve-manager\/9.[1-3]/g' haos-vm.sh
-bash haos-vm.sh
+bash -c "$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVE/raw/branch/main/ct/homeassistant.sh)"
 
 # Install Docker CT
 bash -c "$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVE/raw/branch/main/ct/docker.sh)"
