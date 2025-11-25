@@ -59,6 +59,15 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashi
 sudo apt update
 sudo apt-get install terraform
 
+# If you are in 25.04 ubuntu for terraform
+# Remove the incorrect repository entry
+sudo rm /etc/apt/sources.list.d/hashicorp.list
+# Add the correct one (replace 'noble' with your actual codename)
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com noble main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+# Update and install
+sudo apt update
+sudo apt-get install terraform
+
 # l2tp
 sudo add-apt-repository ppa:nm-l2tp/network-manager-l2tp
 sudo apt-get install network-manager-l2tp network-manager-l2tp-gnome
