@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Scrape the PVE exporter itself
+  - job_name: 'pve-exporter'
+    static_configs:
+      - targets: ['localhost:9221']
+
+  # Scrape Proxmox metrics via the exporter
+  - job_name: 'proxmox'
+    static_configs:
+      - targets:
+        - 10.0.101.2  # Your Proxmox server
+    metrics_path: /pve
+    params:
+      module: [default]
+      cluster: ['1']  # Enable cluster collectors
+      node: ['1']     # Enable node collectors
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: pve-exporter:9221  # PVE exporter address

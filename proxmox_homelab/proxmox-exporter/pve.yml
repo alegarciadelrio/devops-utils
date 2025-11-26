@@ -1,0 +1,8 @@
+default:
+  user: monitoring@pve
+  password: your_password_here
+  verify_ssl: false
+  # Optional: specify nodes if needed
+  # nodes:
+  #   - pve-node1
+  #   - pve-node2
