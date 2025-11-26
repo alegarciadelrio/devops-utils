@@ -40,6 +40,9 @@ dpkg --configure gasket-dkms
 dkms status gasket
 lspci -nn | grep 089a
 ls /dev/apex_0
+apt install -y vainfo intel-gpu-tools 2>&1 | grep -v "enterprise.proxmox.com"
+apt install -y intel-media-va-driver i965-va-driver
+vainfo --display drm --device /dev/dri/renderD128
 
 # 1. Fixed /usr/src/gasket-1.0/gasket_page_table.c (line 57)
 # Issue: MODULE_IMPORT_NS(DMA_BUF) had incorrect syntax
