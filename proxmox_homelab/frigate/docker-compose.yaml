@@ -8,6 +8,8 @@ services:
     devices:
       - /dev/apex_0:/dev/apex_0 # Passes a PCIe Coral, follow driver instructions here https://coral.ai/docs/m2/get-started/#2a-on-linux
       - /dev/dri/renderD128:/dev/dri/renderD128
+    group_add:
+      - "993" # render group for GPU access
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /opt/frigate/config:/config
