@@ -5,6 +5,7 @@ sudo apt install nmap
 sudo apt install curl
 sudo apt install solaar vim
 sudo apt install remmina
+sudo apt install usb-creator-gtk
 
 sudo snap connect remmina:audio-record :audio-record
 sudo snap connect remmina:avahi-observe :avahi-observe
