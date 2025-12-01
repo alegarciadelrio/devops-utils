@@ -23,7 +23,70 @@ class SQSAuditor:
         """Initialize AWS clients and data structures."""
         self.sqs_client = boto3.client('sqs')
         self.cloudwatch = boto3.client('cloudwatch')
+        self.cf_client = boto3.client('cloudformation')
         self.queues = []
+    def get_stack_name_from_arn(self, resource_arn: str, queue_url: str = '') -> str:
+        """
+        Get the CloudFormation stack name from a resource ARN.
+        Returns the stack name as a string or empty string if not found.
+        """
+        try:
+            # First, try to get stack info from tags (fastest method)
+            try:
+                # Use provided queue_url or convert ARN to URL
+                url = queue_url if queue_url else self._arn_to_url(resource_arn)
+                response = self.sqs_client.list_queue_tags(QueueUrl=url)
+                tags = response.get('Tags', {})
+                
+                # Check for CloudFormation stack name tag
+                stack_name = tags.get('aws:cloudformation:stack-name')
+                if stack_name:
+                    return stack_name
+                    
+            except Exception as e:
+                logger.debug(f"Error getting tags for {resource_arn}: {str(e)}")
+                
+            # Try CloudFormation API with different resource identifiers
+            # CloudFormation might use queue name, URL, or ARN depending on how it was created
+            # For SQS, the Queue URL is typically used as the PhysicalResourceId
+            identifiers_to_try = [
+                queue_url if queue_url else self._arn_to_url(resource_arn),  # Queue URL (most common)
+                resource_arn.split(':')[-1],  # Queue name
+                resource_arn  # Full ARN
+            ]
+            
+            for resource_id in identifiers_to_try:
+                try:
+                    response = self.cf_client.describe_stack_resources(
+                        PhysicalResourceId=resource_id
+                    )
+                    
+                    if response.get('StackResources'):
+                        return response['StackResources'][0]['StackName']
+                        
+                except self.cf_client.exceptions.ClientError as e:
+                    if 'does not exist' in str(e):
+                        continue  # Try next identifier
+                    logger.debug(f"CloudFormation lookup failed for {resource_id}: {str(e)}")
+                except Exception as e:
+                    logger.debug(f"Error trying identifier {resource_id}: {str(e)}")
+                    
+        except Exception as e:
+            logger.debug(f"Unexpected error getting stack info for {resource_arn}: {str(e)}")
+            
+        return ''  # Return empty string when not managed by CloudFormation
+    
+    def _arn_to_url(self, queue_arn: str) -> str:
+        """Convert a queue ARN to a queue URL."""
+        # ARN format: arn:aws:sqs:region:account-id:queue-name
+        parts = queue_arn.split(':')
+        if len(parts) >= 6:
+            region = parts[3]
+            account_id = parts[4]
+            queue_name = parts[5]
+            return f"https://sqs.{region}.amazonaws.com/{account_id}/{queue_name}"
+        return ""
+    
         
     def get_message_count_30d(self, queue_name: str) -> int:
         """Get the number of messages received in the last 30 days."""
@@ -81,11 +144,16 @@ class SQSAuditor:
                     # Extract queue name from URL
                     queue_name = queue_url.split('/')[-1]
                     
+                    # Get stack name from CloudFormation
+                    queue_arn = attributes.get('QueueArn', '')
+                    stack_name = self.get_stack_name_from_arn(queue_arn, queue_url) if queue_arn else ''
+                    
                     # Prepare queue info
                     queue_info = {
                         'QueueName': queue_name,
                         'QueueUrl': queue_url,
                         'Region': self.get_region_from_url(queue_url),
+                        'StackName': stack_name,
                         **attributes,
                         'Tags': ', '.join([f"{k}={v}" for k, v in tags.items()]) if tags else 'None'
                     }
@@ -246,7 +314,7 @@ def save_to_excel(data: List[Dict[str, Any]], filename: str = 'sqs_audit.xlsx') 
     # Convert to DataFrame
     df = pd.DataFrame(data)
     
-    # Add Environment and StackName columns
+    # Add Environment column
     def get_environment(queue_name):
         if not isinstance(queue_name, str):
             return 'unknown'
@@ -255,21 +323,12 @@ def save_to_excel(data: List[Dict[str, Any]], filename: str = 'sqs_audit.xlsx') 
             return parts[-1]
         return 'unknown'
     
-    def get_stackname(queue_name):
-        if not isinstance(queue_name, str):
-            return 'unknown'
-        # Remove environment suffix if present
-        name = queue_name
-        if name.endswith('-dev') or name.endswith('-prod') or name.endswith('-staging'):
-            name = name.rsplit('-', 1)[0]
-        # Remove common prefixes
-        for prefix in ['aeropay-queue-', 'aeropay-']:
-            if name.startswith(prefix):
-                name = name[len(prefix):]
-        return name or 'unknown'
-    
     df['Environment'] = df['QueueName'].apply(get_environment)
-    df['StackName'] = df['QueueName'].apply(get_stackname)
+    
+    # StackName is already in the data from get_all_queues()
+    # Ensure it exists in case of any missing values
+    if 'StackName' not in df.columns:
+        df['StackName'] = ''
     
     # Define the column order and their display names
     column_mapping = {
