@@ -130,3 +130,7 @@ echo "deb [signed-by=/etc/apt/keyrings/keys.anydesk.com.asc] https://deb.anydesk
 # Update apt caches and install the AnyDesk client
 sudo apt update
 sudo apt install anydesk
+
+# Claude AI CLI installation
+curl -fsSL https://claude.ai/install.sh | bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
